@@ -1,0 +1,15 @@
+FROM ubuntu@sha256:0e3a6f141388b939b3af48805a744437900cf7abe66b263a7104120ba424d0b9
+
+RUN  apt-get update && \
+    apt-get install -y openjdk-8-jdk curl python3 locales && \
+    locale-gen en_US.UTF-8 && \
+    curl http://miroir.univ-lorraine.fr/apache/spark/spark-2.4.4/spark-2.4.4-bin-hadoop2.7.tgz -o /tmp/spark-2.4.4-bin-hadoop2.7.tgz && \
+    tar -xvf /tmp/spark-2.4.4-bin-hadoop2.7.tgz
+
+ENV LC_ALL="en_US.UTF-8" PYSPARK_PYTHON=python3
+
+VOLUME ["/data"]
+
+EXPOSE 4040/tcp
+
+ENTRYPOINT ["/spark-2.4.4-bin-hadoop2.7/bin/pyspark"]
