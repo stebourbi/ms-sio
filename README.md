@@ -2,12 +2,12 @@
 
 ## Cours 1: spark 
 
-Objectifs:
-    + manipuler le dsl de spark
-    + comprendre le concept de RDD
-    + comprendre le modele de memoire
-    + voir comment configurer un job spark 
-    + voir comment lancer un job spark 
+- Objectifs:
++ manipuler le dsl de spark
++ comprendre le concept de RDD
++ comprendre le modele de memoire
++ voir comment configurer un job spark 
++ voir comment lancer un job spark 
 
 - preparer le dataset:
 
@@ -124,8 +124,11 @@ cs = df.crossJoin(df.sample(0.009))
     
     + de quelle resources je dispose sur mon cluster
         + Memoire 
+        + CPU
+        + Noeuds
     + quelle quantité de données je vais manipuler
-        + Partition
+        + Tailles
+        + Partitions
     
 - Comment je vais sauvegarder mon resultat:
     + csv
@@ -137,6 +140,11 @@ cs = df.crossJoin(df.sample(0.009))
     
 - Comment je lance mon job en production?
 
+```shell
+   docker run --rm -ti -v ~/cours-hdp2/datasets:/data -v $(pwd)/data-ingestion-job/src:/src  -p 4040:4040 --entrypoint bash stebourbi/sio:pyspark
+   
+   /spark-2.4.4-bin-hadoop2.7/bin/spark-submit /src/process.py
+```
 
 ## Cours 2: streaming
 
