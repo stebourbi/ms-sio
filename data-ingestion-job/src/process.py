@@ -12,9 +12,10 @@ def main():
     parser.add_argument('-c', "--categories_file", help='Categories input file', required=True)
     parser.add_argument('-o', '--output', help='Output file', required=True)
 
+    args = parser.parse_args()
+
     spark = SparkSession.builder.getOrCreate()
 
-    args = parser.parse_args()
     process(spark,args.videos_file,args.categories_file,args.output)
 
 
