@@ -141,9 +141,9 @@ cs = df.crossJoin(df.sample(0.009))
 - Comment je lance mon job en production?
 
 ```shell
-   docker run --rm -ti -v ~/cours-hdp2/datasets:/data -v $(pwd)/data-ingestion-job/src:/src  -p 4040:4040 --entrypoint bash stebourbi/sio:pyspark
+   docker run --rm -ti -v ~/cours-hdp2/datasets:/data -v $(pwd)/data-ingestion-job/src:/src  --entrypoint bash stebourbi/sio:pyspark
    
-   /spark-2.4.4-bin-hadoop2.7/bin/spark-submit /src/process.py
+   /spark-2.4.4-bin-hadoop2.7/bin/spark-submit /src/process.py -v /data/raw/FRvideos.csv -c /data/raw/FR_category_id.json -o /data/output00
 ```
 
 ## Cours 2: streaming 
