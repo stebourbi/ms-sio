@@ -166,11 +166,11 @@ docker-compose -f zk-single-kafka-single.yml up
 s'y connecter et faire des manips:
 
 ```bash 
-kafka-topics --bootstrap-server localhost:9092 --create --topic topic01 --partitions 1 --replication-factor 1
+kafka-topics --bootstrap-server localhost:9092 --create --topic topic03 --partitions 3 --replication-factor 1
 
-kafka-console-producer --broker-list localhost:9092  --topic topic01
+kafka-console-producer --broker-list localhost:9092  --topic topic03
 
-kafka-console-consumer --bootstrap-server  localhost:9092  --topic videos --from-beginning
+kafka-console-consumer --bootstrap-server  localhost:9092  --topic topic03
 ```
 
 lancer un spark-shell (pyspark) sur un container docker qui voit le broker kafka
