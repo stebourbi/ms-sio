@@ -207,6 +207,13 @@ EOF
 kafka-console-producer --broker-list localhost:9092  --topic topic01 < data
 
 ```
+Les questions qu'on se pose pour un traitement en streaming:
+
+ - Quel traitement?
+ - A quelle periode/fenetre s'applique le traitement?
+ - Quand est ce qu'on emet le resultat?
+ - Comment on restitue le resultat?
+
 
 - ajouter le temps de capture de la données
 
@@ -265,22 +272,10 @@ df = df.select(df.value.cast("string"),df.timestamp.alias('capture_time'))
 df = df.withColumn('processing_time',current_timestamp())
 df = df.withColumn('event_time',to_timestamp(split(df.value,',')[0]))
 df = df.withColumn('value',split(df.value,',')[1])
-df = df.withWatermark("capture_time", "15 minutes") 
 df = df.groupBy(window(df.capture_time,"10 minutes","10 minutes"),df.value).count()
 query = df.writeStream.outputMode("update").format("console").option('truncate', 'false').start()
 query.awaitTermination()
 ```
-
-___ a retenir__
-
-windowing:
- - fixed window: simple decoupage en periode egale (sliding avec pas == periode)
- - sliding window: definie par un pas et une periode (souvent pas >= periode)
- - session: depend de la presence ou pas d'un pattern dans la donée
-le windowing peut se baser sur :
- - event time
- - processing time 
- - capture time   
 
 
 - gerer les evenement en retard:
@@ -298,13 +293,18 @@ query = df.writeStream.outputMode("update").format("console").option('truncate',
 query.awaitTermination()
 ```
 
-__a retenir__: la notion completude de donées par rapport au frontiere des windows:
- - watermark: la limite aprés laquelle on considere/suppose que tte les données sont parvenues
- - triggering: quand on considere que les events/données relative a une window sont constituée et prete au processing
-la restitution du resultat:
-    - complete
-    - 'append'
-    - mise a jour
+
+___ a retenir__
+
+windowing:
+ - fixed window: simple decoupage en periode egale (sliding avec pas == periode)
+ - sliding window: definie par un pas et une periode (souvent pas >= periode)
+ - session: depend de la presence ou pas d'un pattern dans la donée
+le windowing peut se baser sur :
+ - event time
+ - processing time 
+ - capture time   
+
 
 
 - decider du temps de traitement:
@@ -321,14 +321,13 @@ df = df.groupBy(window(df.capture_time,"10 minutes","10 minutes"),df.value).coun
 query = df.writeStream.trigger(processingTime='30 seconds').outputMode("complete").format("console").option('truncate', 'false').start()
 query.awaitTermination()
 ```
-
-
-Les questions qu'on se pose pour un traitement en streaming:
-
- - Quel traitement?
- - A quelle periode/fenetre s'applique le traitement?
- - Quand est ce qu'on emet le resultat?
- - Comment on restitue le resultat?
+__a retenir__: la notion completude de donées par rapport au frontiere des windows:
+ - watermark: la limite aprés laquelle on considere/suppose que tte les données sont parvenues
+ - triggering: quand on considere que les events/données relative a une window sont constituée et prete au processing
+la restitution du resultat:
+    - complete
+    - 'append'
+    - mise a jour
 
 
 
