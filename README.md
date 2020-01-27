@@ -146,17 +146,133 @@ cs = df.crossJoin(df.sample(0.009))
    /spark-2.4.4-bin-hadoop2.7/bin/spark-submit /src/process.py
 ```
 
-## Cours 2: streaming
+## Cours 2: streaming 
 
-definir le concept de stream dataset vs methode de processing.
+Objectifs:
+ - comprendre les concepts
+ - manipuler un backend de stream : kafka
+ - faire des traitement en streaming avec spark structured streaming
 
-Quel traitement?
-A quelle periode/fenetre s'applique le traitement?
-Quand est ce qu'on emet le resultat?
-Comment on restitue le resultat?
+kafka:
+=====================
 
 
-ordering
+lancer une instance:
+
+```bash
+docker-compose -f zk-single-kafka-single.yml up
+```
+
+s'y connecter et faire des manips:
+
+```bash 
+kafka-topics --bootstrap-server localhost:9092 --create --topic topic01 --partitions 1 --replication-factor 1
+
+kafka-console-producer --broker-list localhost:9092  --topic topic01
+
+kafka-console-consumer --bootstrap-server  localhost:9092  --topic videos --from-beginning
+```
+
+lancer un spark-shell (pyspark) sur un container docker qui voit le broker kafka
+
+```bash
+docker run --rm -ti -v ~/cours-hdp2/datasets:/data -v $(pwd)/data-ingestion-job/src:/src --network docker_default -p 4040:4040 stebourbi/sio:pyspark --packages org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4
+```
+
+Lire depuis le stream/topic kafka
+```bash
+df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "topic01").load()
+
+df.isStreaming
+df.printSchema()
+
+df.count()
+df.show()
+
+query = df.writeStream.outputMode("update").format("console").start()
+
+query.awaitTermination()
+```
+
+inserer des messages dans le topic
+
+```bash
+cat <<EOF >data
+2020-01-26 10:12:15,ligne1,1
+2020-01-26 10:13:12,ligne2,2
+2020-01-26 10:13:13,ligne3,3
+2020-01-26 10:14:16,ligne4,4
+EOF
+
+kafka-console-producer --broker-list localhost:9092  --topic topic01 < data
+
+```
+
+- ajouter le temps de capture de la données
+
+```python
+
+df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "videos").option("startingOffsets", "latest").load()
+df = df.select(df.value.cast("string"),df.timestamp.alias('capture_time'))
+query = df.writeStream.outputMode("update").format("console").option('truncate', 'false').start()
+query.awaitTermination()
+```
+
+- ajouter le temps de l'evenement
+
+
+```python
+from pyspark.sql.functions import *
+df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "videos").option("startingOffsets", "latest").load()
+df = df.select(df.value.cast("string"),df.timestamp.alias('capture_time'))
+df = df.withColumn('event_time',to_timestamp(split(df.value,',')[0]))
+query = df.writeStream.outputMode("update").format("console").option('truncate', 'false').start()
+query.awaitTermination()
+```
+
+- ajouter le temps de traitement
+
+
+```python
+from pyspark.sql.functions import *
+df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "videos").option("startingOffsets", "latest").load()
+df = df.select(df.value.cast("string"),df.timestamp.alias('capture_time'))
+df = df.withColumn('processing_time',current_timestamp())
+df = df.withColumn('event_time',to_timestamp(split(df.value,',')[0]))
+query = df.writeStream.outputMode("update").format("console").option('truncate', 'false').start()
+query.awaitTermination()
+```
+
+- sortir la valeur de l'evenement
+
+```python
+from pyspark.sql.functions import *
+df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "videos").option("startingOffsets", "latest").load()
+df = df.select(df.value.cast("string"),df.timestamp.alias('capture_time'))
+df = df.withColumn('processing_time',current_timestamp())
+df = df.withColumn('event_time',to_timestamp(split(df.value,',')[0]))
+df = df.withColumn('value',split(df.value,',')[1])
+query = df.writeStream.outputMode("update").format("console").option('truncate', 'false').start()
+query.awaitTermination()
+```
+
+- traiter par fenetre de temps:
+
+```python
+from pyspark.sql.functions import *
+df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "videos").option("startingOffsets", "latest").load()
+df = df.select(df.value.cast("string"),df.timestamp.alias('capture_time'))
+df = df.withColumn('processing_time',current_timestamp())
+df = df.withColumn('event_time',to_timestamp(split(df.value,',')[0]))
+df = df.withColumn('value',split(df.value,',')[1])
+df = df.withWatermark("capture_time", "15 minutes") 
+df = df.groupBy(window(df.capture_time,"10 minutes","10 minutes"),df.value).count()
+query = df.writeStream.outputMode("update").format("console").option('truncate', 'false').start()
+query.awaitTermination()
+```
+
+___ a retenir__
+
 windowing:
  - fixed window: simple decoupage en periode egale (sliding avec pas == periode)
  - sliding window: definie par un pas et une periode (souvent pas >= periode)
@@ -165,10 +281,59 @@ le windowing peut se baser sur :
  - event time
  - processing time 
  - capture time   
-se pose la question de la completude de donées par rapport au frontiere des windows:
+
+
+- gerer les evenement en retard:
+
+```python
+from pyspark.sql.functions import *
+df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "videos").option("startingOffsets", "latest").load()
+df = df.select(df.value.cast("string"),df.timestamp.alias('capture_time'))
+df = df.withColumn('processing_time',current_timestamp())
+df = df.withColumn('event_time',to_timestamp(split(df.value,',')[0]))
+df = df.withColumn('value',split(df.value,',')[1])
+df = df.withWatermark("capture_time", "15 minutes") 
+df = df.groupBy(window(df.capture_time,"10 minutes","10 minutes"),df.value).count()
+query = df.writeStream.outputMode("update").format("console").option('truncate', 'false').start()
+query.awaitTermination()
+```
+
+__a retenir__: la notion completude de donées par rapport au frontiere des windows:
  - watermark: la limite aprés laquelle on considere/suppose que tte les données sont parvenues
  - triggering: quand on considere que les events/données relative a une window sont constituée et prete au processing
-autres concepts:
- - accumulation des resultats
+la restitution du resultat:
+    - complete
+    - 'append'
+    - mise a jour
+
+
+- decider du temps de traitement:
+
+```python
+from pyspark.sql.functions import *
+df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "videos").option("startingOffsets", "latest").load()
+df = df.select(df.value.cast("string"),df.timestamp.alias('capture_time'))
+df = df.withColumn('processing_time',current_timestamp())
+df = df.withColumn('event_time',to_timestamp(split(df.value,',')[0]))
+df = df.withColumn('value',split(df.value,',')[1])
+df = df.withWatermark("capture_time", "15 minutes") 
+df = df.groupBy(window(df.capture_time,"10 minutes","10 minutes"),df.value).count()
+query = df.writeStream.trigger(processingTime='30 seconds').outputMode("complete").format("console").option('truncate', 'false').start()
+query.awaitTermination()
+```
+
+
+Les questions qu'on se pose pour un traitement en streaming:
+
+ - Quel traitement?
+ - A quelle periode/fenetre s'applique le traitement?
+ - Quand est ce qu'on emet le resultat?
+ - Comment on restitue le resultat?
+
+
+
+
+
+
  
 
