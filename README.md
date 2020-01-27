@@ -176,7 +176,7 @@ kafka-console-consumer --bootstrap-server  localhost:9092  --topic videos --from
 lancer un spark-shell (pyspark) sur un container docker qui voit le broker kafka
 
 ```bash
-docker run --rm -ti -v ~/cours-hdp2/datasets:/data -v $(pwd)/data-ingestion-job/src:/src --network docker_default -p 4040:4040 stebourbi/sio:pyspark --packages org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4
+docker run --rm -ti -v ~/cours-hdp2/datasets:/data --network docker_default -p 4040:4040 stebourbi/sio:pyspark --packages org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4
 ```
 
 Lire depuis le stream/topic kafka
@@ -212,7 +212,7 @@ kafka-console-producer --broker-list localhost:9092  --topic topic01 < data
 
 ```python
 
-df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "videos").option("startingOffsets", "latest").load()
+df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "topic01").option("startingOffsets", "latest").load()
 df = df.select(df.value.cast("string"),df.timestamp.alias('capture_time'))
 query = df.writeStream.outputMode("update").format("console").option('truncate', 'false').start()
 query.awaitTermination()
@@ -223,7 +223,7 @@ query.awaitTermination()
 
 ```python
 from pyspark.sql.functions import *
-df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "videos").option("startingOffsets", "latest").load()
+df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "topic01").option("startingOffsets", "latest").load()
 df = df.select(df.value.cast("string"),df.timestamp.alias('capture_time'))
 df = df.withColumn('event_time',to_timestamp(split(df.value,',')[0]))
 query = df.writeStream.outputMode("update").format("console").option('truncate', 'false').start()
@@ -235,7 +235,7 @@ query.awaitTermination()
 
 ```python
 from pyspark.sql.functions import *
-df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "videos").option("startingOffsets", "latest").load()
+df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "topic01").option("startingOffsets", "latest").load()
 df = df.select(df.value.cast("string"),df.timestamp.alias('capture_time'))
 df = df.withColumn('processing_time',current_timestamp())
 df = df.withColumn('event_time',to_timestamp(split(df.value,',')[0]))
@@ -247,7 +247,7 @@ query.awaitTermination()
 
 ```python
 from pyspark.sql.functions import *
-df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "videos").option("startingOffsets", "latest").load()
+df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "topic01").option("startingOffsets", "latest").load()
 df = df.select(df.value.cast("string"),df.timestamp.alias('capture_time'))
 df = df.withColumn('processing_time',current_timestamp())
 df = df.withColumn('event_time',to_timestamp(split(df.value,',')[0]))
@@ -260,7 +260,7 @@ query.awaitTermination()
 
 ```python
 from pyspark.sql.functions import *
-df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "videos").option("startingOffsets", "latest").load()
+df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "topic01").option("startingOffsets", "latest").load()
 df = df.select(df.value.cast("string"),df.timestamp.alias('capture_time'))
 df = df.withColumn('processing_time',current_timestamp())
 df = df.withColumn('event_time',to_timestamp(split(df.value,',')[0]))
