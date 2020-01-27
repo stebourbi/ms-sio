@@ -311,7 +311,7 @@ le windowing peut se baser sur :
 
 ```python
 from pyspark.sql.functions import *
-df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "videos").option("startingOffsets", "latest").load()
+df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "kafka1:19092").option("subscribe", "topic3").option("startingOffsets", "latest").load()
 df = df.select(df.value.cast("string"),df.timestamp.alias('capture_time'))
 df = df.withColumn('processing_time',current_timestamp())
 df = df.withColumn('event_time',to_timestamp(split(df.value,',')[0]))
