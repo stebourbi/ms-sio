@@ -137,7 +137,7 @@ df.persist(pyspark.StorageLevel.MEMORY_ONLY) # voir https://spark.apache.org/doc
 
 ```
 
-__ a retenir __
+__A retenir__
 
 - La memoire est l'une des ressources avec laquelle on inter-agit le plus en utilisant/optimisant spark.
 - Quand on parle de mémoire ne surtout pas confondre:
@@ -155,7 +155,7 @@ Mais aussi:
 - et surtout le code source en commenceant par l'implémentation du [UnifiedMemoryManager](https://github.com/apache/spark/blob/branch-1.6/core/src/main/scala/org/apache/spark/memory/UnifiedMemoryManager.scala)
      
 
-__ A NE JAMAIS JAMAIS JAMAIS OUBLIER __ : Spark n'est ni conçu ni pensé pour charger ENTIEREMENT un dataset en mémoire. Un dataset est représenté par une RDD qui est partitionnée en plusieurs blocks/partitions.
+__A NE JAMAIS JAMAIS JAMAIS OUBLIER__ : Spark n'est ni conçu ni pensé pour charger ENTIEREMENT un dataset en mémoire. Un dataset est représenté par une RDD qui est partitionnée en plusieurs blocks/partitions.
 Il faut qu'au moins la taille "d'un seul" block/partition "puisse tenir en mémoire".   
     
     
@@ -210,12 +210,13 @@ Voici la liste [des configurations](http://spark.apache.org/docs/latest/configur
 
       
 __a voir/aller plus loin__
-    - voir par [ici](https://spark.apache.org/docs/latest/api/python/pyspark.sql.html#) pour la syntaxe
-    - https://databricks.com/blog/2016/07/14/a-tale-of-three-apache-spark-apis-rdds-dataframes-and-datasets.html
-    - les fondements: 
-     + [Resilient Distributed Datasets: A Fault-Tolerant Abstraction for
+  
+  - voir par [ici](https://spark.apache.org/docs/latest/api/python/pyspark.sql.html#) pour la syntaxe
+  - https://databricks.com/blog/2016/07/14/a-tale-of-three-apache-spark-apis-rdds-dataframes-and-datasets.html
+  - les fondements: 
+    + [Resilient Distributed Datasets: A Fault-Tolerant Abstraction for
 In-Memory Cluster Computing](https://www.usenix.org/system/files/conference/nsdi12/nsdi12-final138.pdf)
-     + [Spark SQL: Relational Data Processing in Spark](https://amplab.cs.berkeley.edu/wp-content/uploads/2015/03/SparkSQLSigmod2015.pdf)
+    + [Spark SQL: Relational Data Processing in Spark](https://amplab.cs.berkeley.edu/wp-content/uploads/2015/03/SparkSQLSigmod2015.pdf)
 
 
 
